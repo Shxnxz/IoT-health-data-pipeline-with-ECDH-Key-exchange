@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wearable:health-payload:v1",
+  "title": "Physiological data payload",
+  "description": "Single encrypted message unit emitted by the IoT wearable simulator",
+  "type": "object",
+  "required": ["device_id", "timestamp", "firmware_version", "hrv", "rhr", "sleep", "battery_pct", "signal_quality"],
+  "properties": {
+
+    "device_id": {
+      "type": "string",
+      "pattern": "^WRB-[A-F0-9]{6}$",
+      "description": "Unique device serial. Fixed per process run. Used as key-store lookup on the server."
+    },
+
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO 8601 emission time. Always UTC — no local offsets."
+    },
+
+    "firmware_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+
+    "hrv": {
+      "type": "object",
+      "required": ["rmssd_ms", "sdnn_ms", "lf_hf_ratio", "pnn50_pct", "status"],
+      "properties": {
+        "rmssd_ms":    { "type": "number", "minimum": 0, "description": "Root mean square of successive RR differences. Primary HRV metric." },
+        "sdnn_ms":     { "type": "number", "minimum": 0, "description": "Standard deviation of NN intervals." },
+        "lf_hf_ratio": { "type": "number", "minimum": 0, "description": "Sympathetic vs parasympathetic balance. >2 indicates stress." },
+        "pnn50_pct":   { "type": "number", "minimum": 0, "maximum": 100 },
+        "status":      { "type": "string", "enum": ["normal", "elevated_stress", "recovery"] }
+      }
+    },
+
+    "rhr": {
+      "type": "object",
+      "required": ["bpm", "avg_7d_bpm", "trend"],
+      "properties": {
+        "bpm":        { "type": "integer", "minimum": 30, "maximum": 220 },
+        "avg_7d_bpm": { "type": "integer", "minimum": 30, "maximum": 220 },
+        "trend":      { "type": "string", "enum": ["improving", "stable", "degrading"] }
+      }
+    },
+
+    "sleep": {
+      "type": "object",
+      "required": ["total_duration_min", "efficiency_pct", "stages_pct", "current_stage", "interruptions"],
+      "properties": {
+        "total_duration_min": { "type": "integer", "minimum": 0 },
+        "efficiency_pct":     { "type": "number", "minimum": 0, "maximum": 100 },
+        "stages_pct": {
+          "type": "object",
+          "required": ["awake", "rem", "light", "deep"],
+          "properties": {
+            "awake": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "rem":   { "type": "integer", "minimum": 0, "maximum": 100 },
+            "light": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "deep":  { "type": "integer", "minimum": 0, "maximum": 100 }
+          },
+          "description": "Values must sum to 100. Enforced in generator, validated on consumer."
+        },
+        "current_stage":  { "type": "string", "enum": ["awake", "rem", "light", "deep"] },
+        "interruptions":  { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "battery_pct":    { "type": "integer", "minimum": 0, "maximum": 100 },
+    "signal_quality": { "type": "string", "enum": ["excellent", "good", "fair"] }
+  }
+}
